@@ -3,11 +3,12 @@
 #/ Generate literate-programming-style documentation for Puppet manifests.
 #/
 #/ Options:
+#/       --template_file    Path to custom mustache template
 #/       --help             Show this help message
 
 require 'optparse'
 require 'fileutils'
-require_relative '../lib/pocco.rb'
+require File.expand_path('../lib/pocco.rb', File.dirname(__FILE__))
 
 # Write usage message to stdout and exit.
 def usage(stream=$stderr, status=1)
@@ -26,7 +27,9 @@ end
 
 # Parse command line options, aborting if anything goes wrong.
 module_path = []
-options = {}
+options = {
+  :template_file => './templates/layout.mustache'
+}
 ARGV.options { |o|
   o.program_name = File.basename($0)
   o.on('--template_file [f]') do |f|

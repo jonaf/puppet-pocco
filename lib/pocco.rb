@@ -1,3 +1,6 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
 require 'rocco'
 
 # Reopen rocco and put in some Puppet specific hacks.
