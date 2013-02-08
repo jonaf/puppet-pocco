@@ -1,4 +1,3 @@
-require 'rake'
 require 'rocco'
 
 # Reopen rocco and put in some Puppet specific hacks.
@@ -64,23 +63,62 @@ class Rocco
       }
     end
   end
+
+end
+
+class Rocco::Layout < Mustache
+
+  def sources
+    currentpath = Pathname.new( File.dirname( @doc.file ) )
+    @doc.sources.sort.map do |source|
+      htmlpath = Pathname.new( source.sub( Regexp.new( "#{File.extname(source)}$"), ".html" ) )
+      {
+        :path       => source,
+        :basename   => File.basename(source),
+        :url        => htmlpath.relative_path_from( currentpath )
+      }
+    end
+  end
+
 end
 
 class Pocco
   def initialize(module_path, options={})
-    @sources = Rake::FileList[File.join(module_path,'manifests/**/*.pp')]
+    @sources = Dir.glob(File.join(module_path, '**/*.pp'))
+    # puts "Found files... #{@sources.collect { |source| source = source.split('/')[-1] }.join(', ') }\n"
     @options = options
+    @module_path = module_path
   end
 
   def generate
-    @sources.each do |source_file|
-      dest_file = source_file.sub(Regexp.new("#{File.extname(source_file)}$"), ".html")
-      dest_file.sub!(/manifests\//, 'docs/')
+    # Destination is @module_path/docs
+    dest_dir = File.expand_path(@module_path + "/docs")
+    FileUtils.mkdir_p(dest_dir) unless File.directory? dest_dir
 
+    @sources.each do |source_file|
+
+      # maintain directory structure copying parent directory
+      type_dir = File.dirname(source_file).split(@module_path + "/")[-1]
+
+      # default file path is the destination directory
+      file_path = dest_dir.clone
+
+      # Create directory for this type
+      if type_dir != dest_dir.split('/')[-1]
+        file_path += "/" + type_dir
+        FileUtils.mkdir_p(file_path) unless File.directory? file_path
+      end
+
+      # Generate destination file path and name
+      dest_file = file_path + "/" + File.basename(source_file).sub(Regexp.new("#{File.extname(source_file)}$"), ".html")
+
+      # run the source file through modified Rocco
       rocco = Rocco.new(source_file, @sources.to_a, @options)
-      dest_dir = File.dirname(dest_file)
-      FileUtils.mkdir_p(dest_dir) unless File.directory? dest_dir
+      # save documents to file system
       File.open(dest_file, 'wb') { |fd| fd.write(rocco.to_html) }
     end
+
+    return dest_dir
+
   end
 end

@@ -7,7 +7,7 @@
 
 require 'optparse'
 require 'fileutils'
-require 'pocco'
+require_relative '../lib/pocco.rb'
 
 # Write usage message to stdout and exit.
 def usage(stream=$stderr, status=1)
@@ -18,11 +18,20 @@ def usage(stream=$stderr, status=1)
   exit status
 end
 
+# Exit program with message
+def abort_with_note(note='', status=0)
+  puts "#{File.basename($0)}: #{note}" unless note.empty?
+  exit status
+end
+
 # Parse command line options, aborting if anything goes wrong.
 module_path = []
 options = {}
 ARGV.options { |o|
   o.program_name = File.basename($0)
+  o.on('--template_file [f]') do |f|
+    options[:template_file] = f
+  end
   o.on_tail("-h", "--help") { usage($stdout, 0) }
   o.parse!
 } or abort_with_note
@@ -32,12 +41,17 @@ module_path << ARGV.shift while ARGV.any?
 
 # Make sure we have some files to work with.
 if module_path.empty?
-  abort_with_note "#{File.basename($0)}: no input <module_path>s given"
+  abort_with_note "no input <module_path>s given"
 end
 
 # Run each module through Pocco and write output.
 module_path.each do |path|
-  raise Error, "module path must be a directory: #{path}" unless File.directory? path
+  abort_with_note "<module_path> must be a directory: #{path}" unless File.directory? path
   pocco = Pocco.new(path, options)
-  pocco.generate
+  pocco_result = pocco.generate
+  if not pocco_result.empty?
+    abort_with_note "Documentation generated successfully at #{pocco_result}", 1
+  else
+    abort_with_note "Failed to generate documentation. #{$!}"
+  end
 end
