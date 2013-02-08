@@ -1,6 +1,6 @@
 # Pocco
 
-Puppet-pocco is inspired by pocco (now Pycco), which was inspired rocco, which was inspired by by docco. It's based on rocco.
+Puppet-pocco is inspired by pocco (now Pycco), which was inspired rocco, which was inspired by docco. It's based on rocco.
 
 ## Installation
 

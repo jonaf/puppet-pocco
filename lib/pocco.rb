@@ -87,6 +87,10 @@ end
 
 class Pocco
   def initialize(module_path, options={})
+    if module_path[-1, 1] != '/'
+      module_path += '/'
+    end
+    puts module_path
     @sources = Dir.glob(File.join(module_path, '**/*.pp'))
     # puts "Found files... #{@sources.collect { |source| source = source.split('/')[-1] }.join(', ') }\n"
     @options = options
@@ -95,13 +99,13 @@ class Pocco
 
   def generate
     # Destination is @module_path/docs
-    dest_dir = File.expand_path(@module_path + "/docs")
+    dest_dir = File.expand_path(@module_path + "docs")
     FileUtils.mkdir_p(dest_dir) unless File.directory? dest_dir
 
     @sources.each do |source_file|
 
       # maintain directory structure copying parent directory
-      type_dir = File.dirname(source_file).split(@module_path + "/")[-1]
+      type_dir = File.dirname(source_file).split(@module_path)[-1]
 
       # default file path is the destination directory
       file_path = dest_dir.clone
